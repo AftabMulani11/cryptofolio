@@ -1,0 +1,231 @@
+pipeline {
+    agent any
+
+    triggers {
+        githubPush() 
+    }
+
+    environment {
+        // --- Configuration ---
+        SONAR_ENV = 'SonarCloud' 
+        SCANNER_TOOL = 'SonarScanner' 
+
+        // --- Credentials ---
+        SONAR_ORG     = credentials('SONAR_ORG_KEY')
+        SONAR_PROJECT = credentials('SONAR_PROJ_KEY')
+        
+        AWS_REGION      = 'eu-west-1'      
+        AWS_ACCOUNT_ID  = '282761108088'    
+        
+        ECR_BACKEND_REPO  = 'cryptofolio-app-backend'
+        ECR_FRONTEND_REPO = 'cryptofolio-app-frontend'
+        EB_APP_NAME     = 'CryptoApp'
+        EB_ENV_NAME     = 'cryptofolio-env'
+        S3_BUCKET       = 'cryptofolio-app-bucket' 
+        
+        AWS_CRED_ID     = 'AWS_CLI_CRED' 
+        TOKEN_CRED_ID   = 'MY_TOKEN_SECRET'
+        REGION_VAR_ID   = 'AWS_REGION_NAME'
+        DEPLOY_ZIP      = "deploy-${env.BUILD_NUMBER}.zip"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps { checkout scm }
+        }
+
+        stage('Static Code Analysis') {
+            steps {
+                withCredentials([
+                    usernamePassword(credentialsId: env.AWS_CRED_ID, usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY'),
+                    string(credentialsId: env.REGION_VAR_ID, variable: 'AWS_REGION_NAME')
+                ]) {
+                    script {
+                        echo "Starting Analysis..."
+                        
+                        // 1. Install Dependencies
+                        sh '''
+                            python3 -m venv venv
+                            . venv/bin/activate
+                            pip install pylint pytest pytest-cov
+                            if [ -f backend/re.txt ]; then pip install -r backend/re.txt; fi
+                        '''
+
+                        // 2. Run Unit Tests (Pytest)
+                        // Removed "|| true" so build FAILS if tests fail
+                        sh """
+                            . venv/bin/activate
+                            export AWS_ACCESS_KEY_ID='${AWS_ACCESS_KEY_ID}'
+                            export AWS_SECRET_ACCESS_KEY='${AWS_SECRET_ACCESS_KEY}'
+                            export AWS_REGION_NAME='${AWS_REGION_NAME}'
+                            
+                            # Optional: Add --cov-fail-under=90 to fail if coverage is < 90%
+                            PYTHONPATH=\$PWD pytest --cov-fail-under=90 --cov=backend --cov-report=xml:coverage.xml
+                        """
+
+                        // 3. Run Linting (Pylint)
+                        // FIX: Added --fail-under=9 and removed "|| true"
+                        // This causes the pipeline to STOP if score < 9.0
+                        sh '''
+                            . venv/bin/activate
+                            pylint --fail-under=9 --disable=E0401,R0914,R0912 **/*.py --msg-template="{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}" > pylint-report.txt
+                        '''
+
+                        // 4. Run SonarScanner
+                        def scannerHome = tool name: "${SCANNER_TOOL}", type: 'hudson.plugins.sonar.SonarRunnerInstallation'
+                        
+                        withSonarQubeEnv("${SONAR_ENV}") {
+                            sh """
+                                ${scannerHome}/bin/sonar-scanner \\
+                                -Dsonar.organization=${env.SONAR_ORG} \\
+                                -Dsonar.projectKey=${env.SONAR_PROJECT} \\
+                                -Dsonar.sources=. \\
+                                -Dsonar.exclusions=venv/**,**/*.js,**/*.html,DevOps/** \\
+                                -Dsonar.python.pylint.reportPath=pylint-report.txt \\
+                                -Dsonar.python.coverage.reportPaths=coverage.xml \\
+                                -Dsonar.python.version=3.9
+                            """
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Security vulnerability scan and Quality Gate') {
+            steps {
+                script {
+                    timeout(time: 10, unit: 'MINUTES') {
+                        def qg = waitForQualityGate()
+                        if (qg.status != 'OK') {
+                            error "Pipeline aborted due to quality gate failure: ${qg.status}"
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Build Locally') {
+            steps {
+                withCredentials([
+                    usernamePassword(credentialsId: env.AWS_CRED_ID, usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')
+                ]) {
+                    script {
+                        echo "Building Docker images..."
+                        sh 'docker build -t cryptofolio-app-backend:latest -f DevOps/Dockerfile.backend .'
+                        sh 'docker build -t cryptofolio-app-frontend:latest -f DevOps/Dockerfile.frontend .'
+                    }
+                }
+            }
+        }
+
+        stage('Login & Push to ECR') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: env.AWS_CRED_ID, usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    script {
+                        echo "Logging into AWS ECR..."
+                        sh "aws ecr get-login-password --region ${env.AWS_REGION} | docker login --username AWS --password-stdin ${env.AWS_ACCOUNT_ID}.dkr.ecr.${env.AWS_REGION}.amazonaws.com"
+
+                        def backendECR  = "${env.AWS_ACCOUNT_ID}.dkr.ecr.${env.AWS_REGION}.amazonaws.com/${env.ECR_BACKEND_REPO}"
+                        def frontendECR = "${env.AWS_ACCOUNT_ID}.dkr.ecr.${env.AWS_REGION}.amazonaws.com/${env.ECR_FRONTEND_REPO}"
+                        
+                        sh "docker tag cryptofolio-app-backend:latest ${backendECR}:${env.BUILD_NUMBER}"
+                        sh "docker push ${backendECR}:${env.BUILD_NUMBER}"
+                        
+                        sh "docker tag cryptofolio-app-frontend:latest ${frontendECR}:${env.BUILD_NUMBER}"
+                        sh "docker push ${frontendECR}:${env.BUILD_NUMBER}"
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Elastic Beanstalk') {
+            steps {
+                withCredentials([
+                    usernamePassword(credentialsId: env.AWS_CRED_ID, usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY'),
+                    string(credentialsId: env.TOKEN_CRED_ID, variable: 'token_secret_key')
+                ]) {
+                    script {
+                        def backendImg  = "${env.AWS_ACCOUNT_ID}.dkr.ecr.${env.AWS_REGION}.amazonaws.com/${env.ECR_BACKEND_REPO}:${env.BUILD_NUMBER}"
+                        def frontendImg = "${env.AWS_ACCOUNT_ID}.dkr.ecr.${env.AWS_REGION}.amazonaws.com/${env.ECR_FRONTEND_REPO}:${env.BUILD_NUMBER}"
+
+                        echo "Generating Production Compose File..."
+                        
+                        writeFile file: 'docker-compose.yml', text: """
+version: '3.8'
+services:
+  backend:
+    image: ${backendImg}
+    expose:
+      - "5000"
+    environment:
+      - AWS_REGION_NAME=${env.AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${env.AWS_ACCESS_KEY_ID}      
+      - AWS_SECRET_ACCESS_KEY=${env.AWS_SECRET_ACCESS_KEY} 
+      - token_secret_key=${env.TOKEN_CRED_ID}
+    volumes:
+      - crypto-data:/app/crypto
+    restart: always
+
+  worker:
+    image: ${backendImg}
+    command: python worker.py
+    environment:
+      - AWS_REGION_NAME=${env.AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${env.AWS_ACCESS_KEY_ID}      
+      - AWS_SECRET_ACCESS_KEY=${env.AWS_SECRET_ACCESS_KEY} 
+    volumes:
+      - crypto-data:/app/crypto
+    restart: always
+
+  frontend:
+    image: ${frontendImg}
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: always
+
+volumes:
+  crypto-data:
+"""
+                        sh "zip ${env.DEPLOY_ZIP} docker-compose.yml"
+                        sh "aws s3 cp ${env.DEPLOY_ZIP} s3://${env.S3_BUCKET}/${env.DEPLOY_ZIP} --region ${env.AWS_REGION}"
+                        
+                        sh """
+                            aws elasticbeanstalk create-application-version \\
+                            --application-name ${env.EB_APP_NAME} \\
+                            --version-label ${env.BUILD_NUMBER} \\
+                            --source-bundle S3Bucket=${env.S3_BUCKET},S3Key=${env.DEPLOY_ZIP} \\
+                            --region ${env.AWS_REGION}
+                        """
+
+                        sh """
+                            aws elasticbeanstalk update-environment \\
+                            --environment-name ${env.EB_ENV_NAME} \\
+                            --version-label ${env.BUILD_NUMBER} \\
+                            --region ${env.AWS_REGION}
+                        """
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                echo "Cleaning up..."
+                def backendECR  = "${env.AWS_ACCOUNT_ID}.dkr.ecr.${env.AWS_REGION}.amazonaws.com/${env.ECR_BACKEND_REPO}"
+                def frontendECR = "${env.AWS_ACCOUNT_ID}.dkr.ecr.${env.AWS_REGION}.amazonaws.com/${env.ECR_FRONTEND_REPO}"
+                
+                sh 'docker rmi cryptofolio-app-backend:latest || true'
+                sh 'docker rmi cryptofolio-app-frontend:latest || true'
+                sh "docker rmi ${backendECR}:${env.BUILD_NUMBER} || true"
+                sh "docker rmi ${frontendECR}:${env.BUILD_NUMBER} || true"
+                
+                sh "rm -f ${env.DEPLOY_ZIP} docker-compose.yml pylint-report.txt coverage.xml" 
+                sh "rm -rf venv"
+            }
+        }
+    }
+}

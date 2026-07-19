@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # 1. Backend API
+  backend:
+    image: cryptofolio-backend  # Name the image so worker can find it
+    build:
+      context: .
+      dockerfile: DevOps/Dockerfile.backend
+    expose:
+      - "5000"
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION_NAME=${AWS_REGION_NAME}
+      - token_secret_key=${token_secret_key}
+    volumes:
+      - crypto-data:/app/crypto # Share data with worker
+    restart: always
+
+  # 2. Worker
+  worker:
+    image: cryptofolio-backend # Use the SAME image built by backend
+    build:
+      context: .
+      dockerfile: DevOps/Dockerfile.backend
+    command: python worker.py
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION_NAME=${AWS_REGION_NAME}
+    volumes:
+      - crypto-data:/app/crypto # Mount same volume to read/write JSON
+    depends_on:
+      - backend
+    restart: always
+
+  # 3. Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: DevOps/Dockerfile.frontend
+      args:
+        # Important: In local docker, we use the service name 'backend' to route traffic
+        # However, Nginx handles the proxy_pass to http://backend:5000 internally.
+        # This var is for the build stage if needed.
+        REACT_APP_API_URL: "" 
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: always
+
+volumes:
+  crypto-data:

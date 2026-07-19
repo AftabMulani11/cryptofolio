@@ -1,0 +1,37 @@
+# --- Version Control & IDEs ---
+.git
+.gitignore
+.vscode
+.idea
+*.swp
+.DS_Store
+
+# --- Dependencies (Local) ---
+# We ignore these so Docker installs fresh, compatible dependencies
+**/node_modules
+**/.venv
+**/venv
+**/__pycache__
+.venv
+venv
+
+# --- Build Artifacts ---
+# Ignore local builds to prevent overwriting the Docker build
+**/build
+**/dist
+*.pyc
+*.pyo
+*.pyd
+
+# --- Environment & Secrets ---
+# NEVER copy local secrets into the image
+.env
+**/.env
+
+# --- DevOps & Docker Configs ---
+# Optional: Ignore the DevOps folder itself if it just contains config
+DevOps/
+docker-compose.yml
+Dockerfile*
+jenkinsfile
+!DevOps/nginx.conf

@@ -1,0 +1,42 @@
+.profile-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px);
+  display: flex; justify-content: center; align-items: center; z-index: 1000;
+}
+
+.profile-card {
+  background: var(--bg-card); width: 400px; padding: 30px;
+  border-radius: 16px; border: 1px solid var(--border-color);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.profile-header { text-align: center; position: relative; margin-bottom: 20px; }
+.close-icon { position: absolute; top: -10px; right: -10px; background: none; border: none; font-size: 1.5rem; color: var(--text-secondary); cursor: pointer; }
+.profile-avatar-large { width: 70px; height: 70px; margin: 0 auto 10px; border-radius: 50%; background: var(--accent-green); color: black; font-size: 2rem; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+
+.profile-stats-row { display: flex; justify-content: space-between; padding: 15px 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
+.stat-item { text-align: center; display: flex; flex-direction: column; }
+.stat-item .label { font-size: 0.75rem; color: var(--text-secondary); }
+.stat-item .value { font-weight: bold; font-size: 1rem; }
+
+.profile-details { margin-bottom: 25px; }
+.detail-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9rem; color: var(--text-secondary); }
+.detail-row strong { color: var(--text-primary); }
+
+/* Forms */
+.form-container { margin-bottom: 20px; text-align: left; }
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 5px; }
+.form-group input { width: 100%; padding: 10px; border-radius: 6px; background: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-primary); outline: none; }
+.form-group input:focus { border-color: var(--accent-green); }
+
+/* Actions */
+.profile-actions { display: flex; flex-direction: column; gap: 10px; }
+.action-btn { padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-primary); cursor: pointer; font-weight: 600; }
+.action-btn.primary { background: var(--accent-green); color: black; border: none; }
+.logout-btn-large { padding: 10px; border-radius: 6px; background: transparent; border: 1px solid var(--accent-red); color: var(--accent-red); cursor: pointer; font-weight: bold; }
+.modal-header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+.back-btn { background: none; border: none; color: var(--accent-green); font-weight: bold; cursor: pointer; font-size: 0.9rem; }

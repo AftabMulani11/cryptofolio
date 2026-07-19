@@ -1,0 +1,302 @@
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  padding-bottom: 40px;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+/* Table Section */
+.table-section {
+  background-color: var(--bg-card);
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.table-section h3 {
+  color: var(--text-primary);
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-secondary);
+}
+
+/* --- ASSET TABLE STYLES --- */
+.asset-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.asset-table th {
+  text-align: left;
+  color: var(--text-secondary);
+  padding: 15px 10px;
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 600;
+}
+
+.asset-table td {
+  padding: 15px 10px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+.asset-row {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.asset-row:hover {
+  background-color: var(--input-bg);
+}
+
+.asset-cell-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.asset-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.asset-symbol {
+  display: block;
+  font-weight: bold;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.asset-name {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-buy, .btn-sell, .btn-edit {
+  border-radius: 6px;
+  padding: 10px 16px; /* Increased padding for better touch area */
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.9rem;
+  border: 1px solid transparent;
+  transition: transform 0.1s;
+  
+  /* Critical for Mobile Taps */
+  position: relative; 
+  z-index: 20; /* Higher than card */
+  pointer-events: auto; /* Ensure it receives clicks */
+}
+
+.btn-buy {
+  background: rgba(0, 223, 154, 0.1);
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+}
+
+.btn-sell {
+  background: rgba(255, 77, 77, 0.1);
+  border-color: var(--accent-red);
+  color: var(--accent-red);
+}
+
+.btn-edit {
+  background: var(--input-bg);
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+
+.btn-buy:active, .btn-sell:active, .btn-edit:active {
+  transform: scale(0.95);
+}
+
+
+/* --- MOBILE ASSET LIST --- */
+.mobile-asset-list {
+  display: none; /* Hidden on desktop */
+  flex-direction: column;
+  gap: 15px;
+}
+
+.asset-card {
+  background-color: var(--input-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 15px;
+  cursor: pointer;
+  position: relative; /* Required for z-index context */
+  z-index: 1;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.asset-info-mobile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.asset-price-mobile {
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.card-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.card-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-stat span {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.card-stat strong {
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.card-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  position: relative;
+  z-index: 10; /* Ensure container is above card base */
+}
+
+.card-actions button {
+  flex: 1;
+  /* Ensure buttons are clickable */
+  pointer-events: auto;
+}
+
+/* --- RECENT ACTIVITY STYLES --- */
+.recent-activity-section {
+  background-color: var(--bg-card);
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+}
+
+.recent-activity-section h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+  color: var(--text-primary);
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.activity-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background-color: var(--input-bg);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.activity-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.type-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.type-dot.buy { background-color: var(--accent-green); box-shadow: 0 0 8px rgba(0, 223, 154, 0.4); }
+.type-dot.sell { background-color: var(--accent-red); box-shadow: 0 0 8px rgba(255, 77, 77, 0.4); }
+
+.activity-coin {
+  display: block;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.activity-date {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.activity-right {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+}
+
+.activity-amount {
+  font-weight: bold;
+}
+
+.activity-price {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+
+/* --- RESPONSIVE MEDIA QUERIES --- */
+@media (max-width: 768px) {
+  .desktop-only { display: none !important; }
+  .mobile-only { display: flex !important; }
+  
+  .dashboard-container {
+    padding: 10px;
+  }
+  
+  .table-section {
+    padding: 15px;
+  }
+}
+
+@media (min-width: 769px) {
+  .desktop-only { display: table !important; }
+  .mobile-only { display: none !important; }
+}

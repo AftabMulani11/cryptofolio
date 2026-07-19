@@ -1,0 +1,177 @@
+.sidebar {
+  width: var(--sidebar-width);
+  height: 100vh;
+  background-color: var(--bg-card);
+  position: fixed;
+  left: 0;
+  top: 0;
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  z-index: 200;
+  transition: width var(--transition-speed) ease, transform var(--transition-speed) ease;
+  overflow-x: hidden;
+}
+
+/* --- HEADER STYLES --- */
+.sidebar-header {
+  height: var(--topbar-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between; 
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 20px;
+}
+
+.logo-full {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  animation: fadeIn 0.3s ease;
+}
+
+.logo-icon { font-size: 1.5rem; }
+.logo-text { font-size: 1.2rem; font-weight: bold; color: var(--accent-green); letter-spacing: 0.5px; }
+
+.header-toggle-btn {
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  transition: all 0.2s ease;
+}
+
+.header-toggle-btn:hover { background: var(--accent-green); color: black; border-color: var(--accent-green); }
+
+/* Collapsed Header */
+.sidebar.collapsed .sidebar-header { justify-content: center; padding: 0; }
+.sidebar.collapsed .header-toggle-btn { width: 40px; height: 40px; background: transparent; border: none; font-size: 1.5rem; }
+.sidebar.collapsed .header-toggle-btn:hover { background: var(--input-bg); color: var(--accent-green); }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+
+/* --- MENU STYLES --- */
+.menu-container { flex: 1; padding: 0 10px; }
+.menu-group { margin-bottom: 20px; }
+
+.menu-title {
+  padding-left: 15px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  font-weight: bold;
+  margin-bottom: 10px;
+  display: block;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.nav-links { list-style: none; padding: 0; margin: 0; }
+
+.nav-links li {
+  margin-bottom: 5px;
+}
+
+/* Style the NavLink (anchor tag) */
+.nav-item {
+  padding: 12px 15px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: 0.2s;
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+  text-decoration: none; /* Remove underline */
+  width: 100%;
+}
+
+.nav-item .icon {
+  font-size: 1.2rem;
+  min-width: 25px;
+  display: flex;
+  justify-content: center;
+}
+
+.nav-item .link-text {
+  margin-left: 15px;
+  font-size: 1rem;
+  opacity: 1;
+  transition: opacity 0.2s;
+}
+
+.nav-item:hover, .nav-item.active {
+  background-color: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+.nav-item.active {
+  background-color: rgba(0, 223, 154, 0.1);
+  color: var(--accent-green);
+  border: 1px solid rgba(0, 223, 154, 0.2);
+}
+
+/* Collapsed Menu Items */
+.sidebar.collapsed .nav-item { justify-content: center; padding: 15px 0; }
+
+/* Footer */
+.sidebar-footer {
+  margin-top: auto;
+  padding: 15px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.logout-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  color: var(--accent-red);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 8px;
+  justify-content: flex-start;
+}
+
+.sidebar.collapsed .logout-btn { justify-content: center; padding: 10px 0; }
+.logout-btn:hover { background: rgba(255, 77, 77, 0.1); }
+
+/* --- MOBILE SPECIFIC --- */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 260px !important; /* Fixed width when open */
+    transform: translateX(0);
+    box-shadow: 2px 0 15px rgba(0,0,0,0.5);
+  }
+  
+  .sidebar.collapsed {
+    transform: translateX(-100%); /* Slide off screen completely */
+    width: 260px !important;
+  }
+
+  /* Hide the internal toggle button on mobile, we use the close button or backdrop */
+  .header-toggle-btn {
+    display: none;
+  }
+  
+  /* Ensure logo is always visible when open */
+  .logo-full { display: flex !important; }
+  .menu-title { display: block !important; }
+  .link-text { display: inline !important; opacity: 1 !important; }
+  .nav-item { justify-content: flex-start !important; padding: 12px 15px !important; }
+  .logout-btn { justify-content: flex-start !important; padding: 10px !important; }
+}

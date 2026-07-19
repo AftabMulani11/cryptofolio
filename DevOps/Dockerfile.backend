@@ -1,0 +1,18 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# 1. Install dependencies
+COPY backend/re.txt .
+RUN pip install --no-cache-dir -r re.txt
+
+# 2. Copy SOURCE CODE
+COPY backend/ .
+
+# 3. Set environment variables
+ENV FLASK_APP=app.py
+ENV FLASK_ENV=production
+ENV PYTHONUNBUFFERED=1
+
+# 4. Run Gunicorn
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--threads", "8", "app:app"]
