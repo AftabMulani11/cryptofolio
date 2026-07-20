@@ -1,3 +1,5 @@
+> **[▶ Live demo](https://aftabmulani11.github.io/cryptofolio/)** — free demo mode: backend is mocked in the browser with sample portfolio data (login `demo`/`demo123`); market prices are live from Binance's free public API. No AWS resources used.
+
 <div align="center">
 
 # 📈 CryptoFolio — Secure Crypto Portfolio Platform
