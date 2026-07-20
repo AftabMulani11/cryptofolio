@@ -33,7 +33,9 @@ jobs:
           node-version: 20
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - run: npm ci
+      # npm install (not ci): lockfile was generated with npm 11; runner's npm 10
+      # rejects its deduped nested-dep layout
+      - run: npm install --no-audit --no-fund
       - run: npm run build
         env:
           REACT_APP_DEMO: "true"
